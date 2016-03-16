@@ -1,9 +1,9 @@
 # InfluxQL
 
-The `influxql` package is a builder for InfluxQL, the SQL-like query language
-InfluxDB uses. The purpose of this package is to offer a better tool to build
-InfluxQL when writing complex queries. Sometimes string concatenation is just
-not the best approach.
+The `influxql` package is a **query** builder for InfluxQL, the SQL-like query
+language InfluxDB uses. The purpose of this package is to offer a better tool
+to build InfluxQL when writing complex queries. Sometimes string concatenation
+is just not the best approach.
 
 This package is still a draft, see some examples below:
 

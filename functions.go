@@ -12,19 +12,23 @@ type timeGroup struct {
 
 var _ = compilable(&timeGroup{})
 
-func (t *timeGroup) Compile() (string, error) {
-	ns := t.d.Nanoseconds()
+func timeFormat(in time.Duration) string {
+	ns := in.Nanoseconds()
 
 	switch int64(0) {
 	case ns % int64(time.Hour):
-		return fmt.Sprintf("time(%dh)", ns/int64(time.Hour)), nil
+		return fmt.Sprintf("%dh", ns/int64(time.Hour))
 	case ns % int64(time.Minute):
-		return fmt.Sprintf("time(%dm)", ns/int64(time.Minute)), nil
+		return fmt.Sprintf("%dm", ns/int64(time.Minute))
 	case ns % int64(time.Second):
-		return fmt.Sprintf("time(%ds)", ns/int64(time.Second)), nil
+		return fmt.Sprintf("%ds", ns/int64(time.Second))
 	}
 
-	return fmt.Sprintf("time(%dns)", ns), nil
+	return fmt.Sprintf("%dns", ns)
+}
+
+func (t *timeGroup) Compile() (string, error) {
+	return fmt.Sprintf("time(%s)", timeFormat(t.d)), nil
 }
 
 func Time(duration time.Duration) compilable {
@@ -88,7 +92,7 @@ func Spread(field string) *customFunc {
 	return Func("SPREAD", []interface{}{&literal{field}}...)
 }
 
-func Sum(field string) *customFunc {
+func Sum(field interface{}) *customFunc {
 	return Func("SUM", []interface{}{&literal{field}}...)
 }
 

@@ -30,7 +30,11 @@ func cleanTemplate(s string) string {
 
 const selectTemplateText = `
 	SELECT
-		{{.Fields | joinWithCommas}}
+		{{if .Fields}}
+			{{.Fields | joinWithCommas}}
+		{{else}}
+			*
+		{{end}}
 	FROM
 		{{.Measurement}}
 	{{if .Where}}
@@ -154,7 +158,7 @@ func (v *value) Compile() (string, error) {
 	case uint8:
 		return fmt.Sprintf("%d", t), nil
 	case time.Duration:
-		return fmt.Sprintf("%dns", t.Nanoseconds()), nil
+		return timeFormat(t), nil
 	default:
 		return fmt.Sprintf(`'%v'`, t), nil
 	}
@@ -169,8 +173,14 @@ func (l *literal) Compile() (string, error) {
 	switch v := l.v.(type) {
 	case compilable:
 		return v.Compile()
+	case time.Duration:
+		t := Time(v)
+		return t.Compile()
 	case string:
-		return fmt.Sprintf(`"%s"`, v), nil
+		if strings.ContainsAny(v, `".`) {
+			return fmt.Sprintf(`%s`, v), nil
+		}
+		return fmt.Sprintf(`%q`, v), nil
 	default:
 		return fmt.Sprintf(`"%v"`, v), nil
 	}

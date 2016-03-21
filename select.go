@@ -5,12 +5,13 @@ import (
 	"fmt"
 )
 
-type selectBuilder struct {
-	measurement compilable
-	fields      []compilable
-	where       []compilable
-	groupBy     []compilable
-	orderBy     []compilable
+// SelectBuilder represents a SELECT statement.
+type SelectBuilder struct {
+	measurement Builder
+	fields      []Builder
+	where       []Builder
+	groupBy     []Builder
+	orderBy     []Builder
 	limit       int
 	offset      int
 	slimit      int
@@ -18,15 +19,17 @@ type selectBuilder struct {
 	fill        interface{}
 }
 
-func Select(fields ...interface{}) *selectBuilder {
-	s := &selectBuilder{}
+// Select creates a SELECT query.
+func Select(fields ...interface{}) *SelectBuilder {
+	s := &SelectBuilder{}
 	for i := range fields {
 		s.fields = append(s.fields, &literal{fields[i]})
 	}
 	return s
 }
 
-func (s *selectBuilder) Fill(v interface{}) *selectBuilder {
+// Fill represents FILL(x).
+func (s *SelectBuilder) Fill(v interface{}) *SelectBuilder {
 	if v == nil {
 		s.fill = nullValue{}
 		return s
@@ -35,62 +38,73 @@ func (s *selectBuilder) Fill(v interface{}) *selectBuilder {
 	return s
 }
 
-func (s *selectBuilder) From(measurement string) *selectBuilder {
+// From represents the FROM in SELECT x FROM.
+func (s *SelectBuilder) From(measurement string) *SelectBuilder {
 	s.measurement = &literal{measurement}
 	return s
 }
 
-func (s *selectBuilder) GroupBy(fields ...interface{}) *selectBuilder {
+// GroupBy represents GROUP BY field.
+func (s *SelectBuilder) GroupBy(fields ...interface{}) *SelectBuilder {
 	for i := range fields {
 		s.groupBy = append(s.groupBy, &literal{fields[i]})
 	}
 	return s
 }
 
-func (s *selectBuilder) OrderBy(fields ...interface{}) *selectBuilder {
+// OrderBy represents ORDER BY field.
+func (s *SelectBuilder) OrderBy(fields ...interface{}) *SelectBuilder {
 	for i := range fields {
 		s.orderBy = append(s.orderBy, &literal{fields[i]})
 	}
 	return s
 }
 
-func (s *selectBuilder) Where(expr string, values ...interface{}) *selectBuilder {
-	s.where = make([]compilable, 0, 1)
+// Where replaces the current conditions.
+func (s *SelectBuilder) Where(expr string, values ...interface{}) *SelectBuilder {
+	s.where = make([]Builder, 0, 1)
 	s.where = append(s.where, &Expr{expr: expr, values: values})
 	return s
 }
 
-func (s *selectBuilder) And(expr string, values ...interface{}) *selectBuilder {
+// And adds a conjunction to the list of conditions.
+func (s *SelectBuilder) And(expr string, values ...interface{}) *SelectBuilder {
 	s.where = append(s.where, andKeyword, &Expr{expr: expr, values: values})
 	return s
 }
 
-func (s *selectBuilder) Or(expr string, values ...interface{}) *selectBuilder {
+// Or adds a disjunction to the list of conditions.
+func (s *SelectBuilder) Or(expr string, values ...interface{}) *SelectBuilder {
 	s.where = append(s.where, orKeyword, &Expr{expr: expr, values: values})
 	return s
 }
 
-func (s *selectBuilder) Offset(offset int) *selectBuilder {
+// Offset represents OFFSET n.
+func (s *SelectBuilder) Offset(offset int) *SelectBuilder {
 	s.offset = offset
 	return s
 }
 
-func (s *selectBuilder) Limit(limit int) *selectBuilder {
+// Limit represents LIMIT n.
+func (s *SelectBuilder) Limit(limit int) *SelectBuilder {
 	s.limit = limit
 	return s
 }
 
-func (s *selectBuilder) SOffset(soffset int) *selectBuilder {
+// SOffset represents SOFFSET n.
+func (s *SelectBuilder) SOffset(soffset int) *SelectBuilder {
 	s.soffset = soffset
 	return s
 }
 
-func (s *selectBuilder) SLimit(slimit int) *selectBuilder {
+// SLimit represents SLIMIT n.
+func (s *SelectBuilder) SLimit(slimit int) *SelectBuilder {
 	s.slimit = slimit
 	return s
 }
 
-func (s *selectBuilder) Build() (string, error) {
+// Build satisfies Builder.
+func (s *SelectBuilder) Build() (string, error) {
 	data := selectTemplateValues{}
 
 	if err := compileInto(s.measurement, &data.Measurement); err != nil {

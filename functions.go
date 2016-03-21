@@ -10,7 +10,7 @@ type timeGroup struct {
 	d time.Duration
 }
 
-var _ = compilable(&timeGroup{})
+var _ = Builder(&timeGroup{})
 
 func timeFormat(in time.Duration) string {
 	ns := in.Nanoseconds()
@@ -27,26 +27,31 @@ func timeFormat(in time.Duration) string {
 	return fmt.Sprintf("%dns", ns)
 }
 
-func (t *timeGroup) Compile() (string, error) {
+// Build satisfies Builder.
+func (t *timeGroup) Build() (string, error) {
 	return fmt.Sprintf("time(%s)", timeFormat(t.d)), nil
 }
 
-func Time(duration time.Duration) compilable {
+// Time represents a time(duration) function.
+func Time(duration time.Duration) Builder {
 	return &timeGroup{d: duration}
 }
 
-type customFunc struct {
+// F represents a function.
+type F struct {
 	name  string
 	alias string
 	args  []interface{}
 }
 
-func (f *customFunc) As(alias string) *customFunc {
+// As is like calling "F() AS alias"
+func (f *F) As(alias string) *F {
 	f.alias = alias
 	return f
 }
 
-func (f *customFunc) Compile() (string, error) {
+// Build satisfies Builder.
+func (f *F) Build() (string, error) {
 	if f.name == "" {
 		return "", fmt.Errorf("Missing function name.")
 	}
@@ -54,9 +59,9 @@ func (f *customFunc) Compile() (string, error) {
 	for _, arg := range f.args {
 		var s string
 		switch t := arg.(type) {
-		case compilable:
+		case Builder:
 			var err error
-			s, err = t.Compile()
+			s, err = t.Build()
 			if err != nil {
 				return "", err
 			}
@@ -72,70 +77,87 @@ func (f *customFunc) Compile() (string, error) {
 	return fn, nil
 }
 
-func Func(name string, args ...interface{}) *customFunc {
-	return &customFunc{name: name, args: args}
+// Func creates a function.
+func Func(name string, args ...interface{}) *F {
+	return &F{name: name, args: args}
 }
 
-func Count(field interface{}) *customFunc {
+// Count represents the COUNT function.
+func Count(field interface{}) *F {
 	return Func("COUNT", []interface{}{&literal{field}}...)
 }
 
-func Mean(field string) *customFunc {
+// Mean represents the MEAN function.
+func Mean(field interface{}) *F {
 	return Func("MEAN", []interface{}{&literal{field}}...)
 }
 
-func Median(field string) *customFunc {
+// Median represents the MEDIAN function.
+func Median(field interface{}) *F {
 	return Func("MEDIAN", []interface{}{&literal{field}}...)
 }
 
-func Spread(field string) *customFunc {
+// Spread represents the SPREAD function.
+func Spread(field interface{}) *F {
 	return Func("SPREAD", []interface{}{&literal{field}}...)
 }
 
-func Sum(field interface{}) *customFunc {
+// Sum represents the SUM function.
+func Sum(field interface{}) *F {
 	return Func("SUM", []interface{}{&literal{field}}...)
 }
 
-func Bottom(field string, params ...interface{}) *customFunc {
-	return Func("SUM", append([]interface{}{&literal{field}}, params...))
+// Bottom represents the BOTTOM function.
+func Bottom(field interface{}, params ...interface{}) *F {
+	return Func("BOTTOM", append([]interface{}{&literal{field}}, params...))
 }
 
-func Top(field string, params ...interface{}) *customFunc {
+// Top represents the TOP function.
+func Top(field interface{}, params ...interface{}) *F {
 	return Func("TOP", append([]interface{}{&literal{field}}, params...))
 }
 
-func Derivative(field string, params ...interface{}) *customFunc {
+// Derivative represents the DERIVATIVE function.
+func Derivative(field interface{}, params ...interface{}) *F {
 	return Func("DERIVATIVE", append([]interface{}{&literal{field}}, params...))
 }
 
-func NonNegativeDerivative(field string, params ...interface{}) *customFunc {
+// NonNegativeDerivative represents the NON_NEGATIVE_DERIVATIVE function.
+func NonNegativeDerivative(field interface{}, params ...interface{}) *F {
 	return Func("NON_NEGATIVE_DERIVATIVE", append([]interface{}{&literal{field}}, params...))
 }
 
-func First(field string) *customFunc {
+// First represents the FIRST function.
+func First(field interface{}) *F {
 	return Func("FIRST", []interface{}{&literal{field}}...)
 }
 
-func StdDev(field string) *customFunc {
+// StdDev represents the STDDEV function.
+func StdDev(field interface{}) *F {
 	return Func("STDDEV", []interface{}{&literal{field}}...)
 }
 
-func Last(field string) *customFunc {
+// Last represents the LAST function.
+func Last(field interface{}) *F {
 	return Func("LAST", []interface{}{&literal{field}}...)
 }
 
-func Max(field string) *customFunc {
+// Max represents the	MAX function.
+func Max(field interface{}) *F {
 	return Func("MAX", []interface{}{&literal{field}}...)
 }
 
-func Min(field string) *customFunc {
+// Min represents the MIN function.
+func Min(field interface{}) *F {
 	return Func("MIN", []interface{}{&literal{field}}...)
 }
 
-func Distinct(field string) *customFunc {
+// Distinct represents the DISTINCT function.
+func Distinct(field interface{}) *F {
 	return Func("DISTINCT", []interface{}{&literal{field}}...)
 }
 
-func Percentile(field string, p float64) *customFunc {
+// Percentile represents the PERCENTILE function.
+func Percentile(field interface{}, p float64) *F {
 	return Func("PERCENTILE", []interface{}{&literal{field}, p})
 }

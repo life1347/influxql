@@ -77,16 +77,18 @@ type keyword struct {
 	v string
 }
 
-func (k *keyword) Compile() (string, error) {
+func (k *keyword) Build() (string, error) {
 	return k.v, nil
 }
 
+// Expr represents an expression.
 type Expr struct {
 	expr   string
 	values []interface{}
 }
 
-func (e *Expr) Compile() (string, error) {
+// Build satisfies Builder.
+func (e *Expr) Build() (string, error) {
 	placeholders := strings.Count(e.expr, placeholder)
 
 	if placeholders > 0 {
@@ -122,7 +124,7 @@ func (e *Expr) Compile() (string, error) {
 	compiled := make([]interface{}, 0, len(e.values))
 	for i := range e.values {
 		lit := &value{e.values[i]}
-		c, err := lit.Compile()
+		c, err := lit.Build()
 		if err != nil {
 			return "", err
 		}
@@ -137,7 +139,7 @@ type value struct {
 	v interface{}
 }
 
-func (v *value) Compile() (string, error) {
+func (v *value) Build() (string, error) {
 	switch t := v.v.(type) {
 	case string:
 		return fmt.Sprintf(`'%s'`, t), nil
@@ -169,13 +171,13 @@ type literal struct {
 	v interface{}
 }
 
-func (l *literal) Compile() (string, error) {
+func (l *literal) Build() (string, error) {
 	switch v := l.v.(type) {
-	case compilable:
-		return v.Compile()
+	case Builder:
+		return v.Build()
 	case time.Duration:
 		t := Time(v)
-		return t.Compile()
+		return t.Build()
 	case string:
 		if strings.ContainsAny(v, `".`) {
 			return fmt.Sprintf(`%s`, v), nil
@@ -187,15 +189,15 @@ func (l *literal) Compile() (string, error) {
 	panic("reached")
 }
 
-func compileInto(src compilable, dst *string) (err error) {
-	*dst, err = src.Compile()
+func compileInto(src Builder, dst *string) (err error) {
+	*dst, err = src.Build()
 	return
 }
 
-func compileArrayInto(src []compilable, dst *[]string) error {
+func compileArrayInto(src []Builder, dst *[]string) error {
 	v := make([]string, 0, len(src))
 	for i := range src {
-		s, err := src[i].Compile()
+		s, err := src[i].Build()
 		if err != nil {
 			return err
 		}

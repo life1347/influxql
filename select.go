@@ -19,6 +19,12 @@ type SelectBuilder struct {
 	fill        interface{}
 }
 
+// SelectFrom creates a SELECT query.
+func From(measurement string) *SelectBuilder {
+	s := &SelectBuilder{measurement: &literal{measurement}}
+	return s
+}
+
 // Select creates a SELECT query.
 func Select(fields ...interface{}) *SelectBuilder {
 	s := &SelectBuilder{}
@@ -35,6 +41,14 @@ func (s *SelectBuilder) Fill(v interface{}) *SelectBuilder {
 		return s
 	}
 	s.fill = v
+	return s
+}
+
+// Select adds fields to select from.
+func (s *SelectBuilder) Select(fields ...interface{}) *SelectBuilder {
+	for i := range fields {
+		s.fields = append(s.fields, &literal{fields[i]})
+	}
 	return s
 }
 

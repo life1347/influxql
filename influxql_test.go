@@ -37,6 +37,16 @@ var testSamples = []struct {
 		false,
 	},
 	{
+		Select("foo").From("bar").Where(`time >`, time.Date(2015, 8, 18, 0, 0, 0, 0, time.UTC)),
+		`SELECT "foo" FROM "bar" WHERE "time" > '2015-08-18T00:00:00Z'`,
+		false,
+	},
+	{
+		Select("foo").From("bar").Where(`time > ?`, time.Date(2015, 8, 18, 0, 0, 0, 0, time.UTC)),
+		`SELECT "foo" FROM "bar" WHERE time > '2015-08-18T00:00:00Z'`,
+		false,
+	},
+	{
 		Select("foo").From("bar").Where(`"location" = ?`, "Toronto"),
 		`SELECT "foo" FROM "bar" WHERE "location" = 'Toronto'`,
 		false,

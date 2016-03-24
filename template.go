@@ -159,6 +159,8 @@ func (v *value) Build() (string, error) {
 		return fmt.Sprintf("%d", t), nil
 	case uint8:
 		return fmt.Sprintf("%d", t), nil
+	case time.Time:
+		return fmt.Sprintf(`'%s'`, t.Format("2006-01-02T15:04:05Z")), nil
 	case time.Duration:
 		return timeFormat(t), nil
 	default:

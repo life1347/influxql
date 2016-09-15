@@ -83,7 +83,11 @@ func (s *SelectBuilder) Where(expr string, values ...interface{}) *SelectBuilder
 
 // And adds a conjunction to the list of conditions.
 func (s *SelectBuilder) And(expr string, values ...interface{}) *SelectBuilder {
-	s.where = append(s.where, andKeyword, &Expr{expr: expr, values: values})
+	if len(s.where) > 0 {
+		s.where = append(s.where, andKeyword, &Expr{expr: expr, values: values})
+	} else {
+		s.where = append(s.where, &Expr{expr: expr, values: values})
+	}
 	return s
 }
 

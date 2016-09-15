@@ -131,6 +131,11 @@ var testSamples = []struct {
 		`SELECT MEAN("value") FROM "cpu" WHERE "region" = 'uswest' GROUP BY time(4h) fill(none)`,
 		false,
 	},
+	{
+		Select(Mean("value")).From("cpu").And("region", "uswest").GroupBy(Time(time.Hour * 4)).Fill("none"),
+		`SELECT MEAN("value") FROM "cpu" WHERE "region" = 'uswest' GROUP BY time(4h) fill(none)`,
+		false,
+	},
 }
 
 func TestSelect(t *testing.T) {
